@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-contract stakingToken is ERC20{
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {
-        _mint(msg.sender, 5000);
+import "@openzeppelin/contracts/access/Ownable.sol";
+contract stakingToken is ERC20, Ownable {
+    constructor(string memory name, string memory symbol, uint256 initialAmount) ERC20(name, symbol) {
+        _mint(msg.sender, initialAmount);
     }
 }
