@@ -11,6 +11,7 @@ contract StakingContract is AccessControlUpgradeable, OwnableUpgradeable {
     uint256 public constant REWARD = 1; // 1 reward token per 5 blocks
     uint256 public startTimestamp;
     uint256 public endTimestamp;
+    uint256 public blockAtEndTimestamp;
     address public rewardTokenContract;
     EnumerableSetUpgradeable.AddressSet private _whitelistedToken; // set that consist of address of token that are able for staking
 
@@ -67,12 +68,16 @@ contract StakingContract is AccessControlUpgradeable, OwnableUpgradeable {
         external
         onlyWhileOpen
         onlyWhitelistedToken(token)
-    {
-        IERC20Upgradeable(token).transferFrom(
+    {   
+        require(amount > 0, "Amount must be greater than zero");
+        bool success = IERC20Upgradeable(token).transferFrom(
             msg.sender,
             address(this),
             amount
         );
+        if (!success) {
+            revert("staking transfer failed");
+        }
         //transfer token from user to staking pool
         _balances[msg.sender][token] += amount; // update information of staking token of corresponding users
         _lastUpdateBlock[msg.sender][token] = block.number; // set the current block number
@@ -88,7 +93,7 @@ contract StakingContract is AccessControlUpgradeable, OwnableUpgradeable {
         _updateRewards(msg.sender, token);
 
         //transfer token from staking pool to user
-        IERC20Upgradeable(token).transfer(msg.sender, amount);
+        IERC20Upgradeable(token).transferFrom(address(this), msg.sender, amount);
 
         //update balance of staking amount of corresponding user
         _balances[msg.sender][token] -= amount;
@@ -113,6 +118,11 @@ contract StakingContract is AccessControlUpgradeable, OwnableUpgradeable {
         }
     }
 
+    // this function used to update block number at the end of timestamp
+    function updateBlockAtEnd() external {
+        blockAtEndTimestamp = block.number;
+    }
+
     //this is used for enquiry of token staked of user.
     function balanceOf(address user, address token) external view returns (uint256) {
         return _balances[user][token];
@@ -122,9 +132,15 @@ contract StakingContract is AccessControlUpgradeable, OwnableUpgradeable {
     function isWhitelistedToken(address token) external view returns (bool) {
         return _whitelistedToken.contains(token);
     }
-     
+    
+    // this function used to update reward of user 
     function _updateRewards(address user, address token) private {
-        uint256 reward = ((block.number - _lastUpdateBlock[user][token]) / 5) * REWARD;
+        uint256 reward;
+        if(block.timestamp > endTimestamp) {
+            reward = ((block.number - blockAtEndTimestamp) / 5) * REWARD;
+        }else {
+            reward = ((block.number - _lastUpdateBlock[user][token]) / 5) * REWARD;
+        }
         _rewards[user] += reward;
         if(block.timestamp >= startTimestamp && block.timestamp <= endTimestamp) {
             _lastUpdateBlock[user][token] = block.number;
