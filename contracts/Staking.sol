@@ -13,6 +13,7 @@ contract StakingContract is AccessControlUpgradeable, OwnableUpgradeable {
     uint256 public endTimestamp;
     uint256 public blockAtEndTimestamp;
     address public rewardTokenContract;
+    bool private flag;
     EnumerableSetUpgradeable.AddressSet private _whitelistedToken; // set that consist of address of token that are able for staking
 
     // map used to store user amount that are staked user => tokenAddress => amount
@@ -119,8 +120,11 @@ contract StakingContract is AccessControlUpgradeable, OwnableUpgradeable {
     }
 
     // this function used to update block number at the end of timestamp
-    function updateBlockAtEnd() external {
-        blockAtEndTimestamp = block.number;
+    function blockNumberAtEndTimestamp() external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if(!flag && block.timestamp > endTimestamp) {
+            blockAtEndTimestamp = block.number;
+            flag = true;
+        }
     }
 
     //this is used for enquiry of token staked of user.
@@ -132,7 +136,7 @@ contract StakingContract is AccessControlUpgradeable, OwnableUpgradeable {
     function isWhitelistedToken(address token) external view returns (bool) {
         return _whitelistedToken.contains(token);
     }
-    
+
     // this function used to update reward of user 
     function _updateRewards(address user, address token) private {
         uint256 reward;

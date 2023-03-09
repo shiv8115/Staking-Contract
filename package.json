@@ -11,11 +11,13 @@
   "license": "ISC",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@nomiclabs/hardhat-ethers": "^2.2.2",
+    "@openzeppelin/hardhat-upgrades": "^1.22.1",
+    "ethers": "^5.7.2",
     "hardhat": "^2.13.0"
   },
   "dependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.6",
-    "@nomiclabs/hardhat-ethers": "^2.2.2",
     "@openzeppelin/contracts": "^4.8.2",
     "@openzeppelin/contracts-upgradeable": "^4.8.2",
     "solidity-coverage": "^0.8.2"
