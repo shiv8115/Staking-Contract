@@ -17,6 +17,9 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     });
 
     // deploy upgradable staking pool contract
+    const startTime = Math.floor(Date.now() / 1000);
+    const endTime = Math.floor(Date.now() / 1000) + 172800;
+
     const StakingContract = await deploy('StakingContract', {
         from: deployer,
         proxy: {
@@ -24,7 +27,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         proxyContract: 'OpenZeppelinTransparentProxy',
         execute: {
         methodName: 'initialize',
-        args: [100, 500, rewardToken.address],
+        args: [startTime, endTime, rewardToken.address],
         },
         upgradeIndex: 0,
         }
