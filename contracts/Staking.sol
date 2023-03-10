@@ -31,7 +31,8 @@ contract StakingContract is AccessControlUpgradeable, OwnableUpgradeable {
     bool private flag;
 
     //A set of token addresses that are allowed for staking.
-    EnumerableSetUpgradeable.AddressSet private _whitelistedToken; 
+    EnumerableSetUpgradeable.AddressSet private _whitelistedToken;
+    EnumerableSetUpgradeable.AddressSet private _whitelistedUsers; 
 
     // map used to store user amount that are staked user => tokenAddress => amount
     mapping(address => mapping(address => uint256)) private _balances;
@@ -129,6 +130,7 @@ contract StakingContract is AccessControlUpgradeable, OwnableUpgradeable {
         if (!success) {
             revert("staking transfer failed");
         }
+        _whitelistedUsers.add(msg.sender);
         _balances[msg.sender][token] += amount; 
         _lastUpdateBlock[msg.sender][token] = block.number; 
         emit Staked(msg.sender, token, amount); 
@@ -195,6 +197,10 @@ contract StakingContract is AccessControlUpgradeable, OwnableUpgradeable {
     /// @return bool value either true or false, if whitelisted return true, otherwise false
     function isWhitelistedToken(address token) external view returns (bool) {
         return _whitelistedToken.contains(token);
+    }
+
+    function isWhitelistedUser(address user) external view returns (bool) {
+        return _whitelistedUsers.contains(user);
     }
 
     /// @dev this function used to update reward of user 
