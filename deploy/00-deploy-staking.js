@@ -1,6 +1,6 @@
 module.exports = async ({ getNamedAccounts, deployments }) => {
-    const { deploy } = deployments
-    const { deployer } = await getNamedAccounts()
+    const { deploy } = deployments;
+    const { deployer } = await getNamedAccounts();
 
     // deploy reward token
     const rewardToken = await deploy("RewardToken", {
@@ -38,4 +38,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     console.log("Staking address : ", StakingContract.address);
 }
 
-module.exports.tags = ["all", "RewardToken", "stakingToken", "StakingContract"];
+module.exports.tags = ["RewardToken", "stakingToken", "StakingContract"];
