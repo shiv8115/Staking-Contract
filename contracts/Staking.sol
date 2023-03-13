@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 /**
 @title Staking Contract
@@ -13,7 +13,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 @dev This contract uses OpenZeppelin's AccessControlUpgradeable, EnumerableSetUpgradeable, IERC20Upgradeable and OwnableUpgradeable contracts.
 @notice Staking can only be done during the specified time duration and with whitelisted tokens.
 */
-contract StakingContract is AccessControlUpgradeable, OwnableUpgradeable {
+contract StakingContract is AccessControlUpgradeable, Ownable2StepUpgradeable {
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.AddressSet;
     uint256 public constant REWARD = 1; // 1 reward token per 5 blocks
 
@@ -95,6 +95,7 @@ contract StakingContract is AccessControlUpgradeable, OwnableUpgradeable {
         require(_endTimestamp > _startTimestamp, "endTimestamp must be greater than startTimestamp");
         require(address(rewardToken) != address(0) ,"Address must be non zero address");
         __AccessControl_init();
+        __Ownable2Step_init();
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         startTimestamp = _startTimestamp;
         endTimestamp = _endTimestamp;
