@@ -132,8 +132,11 @@ contract StakingContract is AccessControlUpgradeable, Ownable2StepUpgradeable {
             revert("staking transfer failed");
         }
         _whitelistedUsers.add(msg.sender);
-        _balances[msg.sender][token] += amount; 
-        _lastUpdateBlock[msg.sender][token] = block.number; 
+        _balances[msg.sender][token] += amount;
+        //if block number already stored then it does not override
+         if(_lastUpdateBlock[msg.sender][token] == 0) {
+            _lastUpdateBlock[msg.sender][token] = block.number; 
+         }
         emit Staked(msg.sender, token, amount); 
     }
 
@@ -210,7 +213,7 @@ contract StakingContract is AccessControlUpgradeable, Ownable2StepUpgradeable {
     function _updateRewards(address user, address token) private {
         uint256 reward;
         if(block.timestamp > endTimestamp) {
-            reward = ((block.number - blockAtEndTimestamp) / 5) * REWARD;
+            reward = ((blockAtEndTimestamp - _lastUpdateBlock[user][token]) / 5) * REWARD;
         }else {
             reward = ((block.number - _lastUpdateBlock[user][token]) / 5) * REWARD;
         }
