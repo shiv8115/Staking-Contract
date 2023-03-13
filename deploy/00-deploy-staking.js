@@ -10,7 +10,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     });
 
     // deploy staking token
-    const stakingToken = await deploy("stakingToken", {
+    const stakingToken = await deploy("StakingToken", {
         from: deployer,
         args: ["StakingToken", "STN", 10000],
         log: true,
@@ -45,4 +45,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     console.log("airdrop address : ", airdropToken.address);
 }
 
-module.exports.tags = ["RewardToken", "stakingToken", "StakingContract", "airdropToken"];
+module.exports.tags = ["RewardToken", "StakingToken", "StakingContract", "airdropToken"];
