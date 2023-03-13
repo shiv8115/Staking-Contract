@@ -81,4 +81,63 @@ describe("Staking Contract", function() {
 		expect(await airdrop.name()).to.equal(expectedName);
 		expect(await airdrop.symbol()).to.equal(expectedSymbol);
 	})
+
+	it("token should be added in whitelist token", async function () {
+		await staking.addWhitelistToken(hardhatToken.address);
+		const expected = true;
+		expect(await staking.isWhitelistedToken(hardhatToken.address)).to.equal(expected);
+	});
+
+	it("only owner should add token in white list", async function () {
+		const [owner, addr1, addr2] = await ethers.getSigners();
+		const expected = true;
+		await expect(staking.connect(addr1).addWhitelistToken(hardhatToken.address)).to.be.revertedWith("AccessControl: account 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 is missing role 0x0000000000000000000000000000000000000000000000000000000000000000");
+	});
+
+	it("Whitelisted element can be removed by owner", async function () {
+		//add token
+		await staking.addWhitelistToken(rewardToken.address);
+		const expected = true;
+		//check for existance
+		expect(await staking.isWhitelistedToken(rewardToken.address)).to.equal(expected);
+		//remove token
+		const output = false;
+		await staking.removeWhitelistToken(rewardToken.address);
+		expect(await staking.isWhitelistedToken(rewardToken.address)).to.equal(output);
+	});
+
+	it("should reverted if user not remove element", async function () {
+		const [owner, addr1] = await ethers.getSigners();
+		//add token
+		await staking.addWhitelistToken(rewardToken.address);
+		const expected = true;
+		//check for existance
+		expect(await staking.isWhitelistedToken(rewardToken.address)).to.equal(expected);
+		//remove token
+		await expect(staking.connect(addr1).removeWhitelistToken(rewardToken.address)).to.be.revertedWith("AccessControl: account 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 is missing role 0x0000000000000000000000000000000000000000000000000000000000000000");
+	});
+
+	it("should revert if staking amount less than zero", async function() {
+		const [owner, addr1] = await ethers.getSigners();
+		await hardhatToken.approve(staking.address, 100000);
+		await expect(staking.stake(hardhatToken.address, 0)).to.be.revertedWith("Amount must be greater than zero");
+
+	});
+
+	it("user should able to stake only whitelisted token", async function () {
+		const [owner, addr1] = await ethers.getSigners();
+		await hardhatToken.approve(staking.address, 100000);
+		await staking.stake(hardhatToken.address, 50);
+		expect(await hardhatToken.balanceOf(staking.address)).to.equal(50);
+		const balance = await hardhatToken.balanceOf(staking.address);
+	});
+
+	it("should emit event of staking", async function() {
+		const [owner] = await ethers.getSigners();
+		await expect(staking.stake(hardhatToken.address, 50))
+        .to.emit(staking, "Staked")
+        .withArgs(owner.address, hardhatToken.address, 50);
+	});
+
+
 });
