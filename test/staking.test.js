@@ -1,10 +1,12 @@
 const { ethers } = require("hardhat");
 const { expect } = require("chai");
-const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
+const { loadFixture, time } = require("@nomicfoundation/hardhat-network-helpers");
 
 let rewardToken,hardhatToken, staking, airdrop; 
 
 describe("Staking Contract", function() {
+
+	//fixture deploys the Staking Token contract and returns the contract, the factory, and the owner's address
     async function deployTokenFixture() {
         const Token = await ethers.getContractFactory("StakingToken");
         const [owner] = await ethers.getSigners();
@@ -14,6 +16,7 @@ describe("Staking Contract", function() {
         return { Token, hardhatToken, owner};
     }
 
+	//fixture deploys the Reward Token contract and returns the contract, the factory, and the owner's address
     async function deployRewardTokenFixture() {
         const TokenReward = await ethers.getContractFactory("RewardToken");
         const [RewardOwner] = await ethers.getSigners();
@@ -22,6 +25,7 @@ describe("Staking Contract", function() {
         return { TokenReward, rewardToken, RewardOwner};
     }
 
+	//fixture deploys the Staking Contract and returns the contract and the factory
 	async function deployStakingFixture() {
 		const Staking = await ethers.getContractFactory("StakingContract");
 		const startTime = Math.floor(Date.now() / 1000);
@@ -34,6 +38,7 @@ describe("Staking Contract", function() {
 		return {Staking, staking};
 	}
 
+	//fixture deploys the Airdrop contract and returns the contract and the factory
 	async function deployAirdropFixture() {
 		const Airdrop = await ethers.getContractFactory("Airdrop");
 		airdrop = await Airdrop.deploy(staking.address, 1000000, 100);
@@ -45,10 +50,12 @@ describe("Staking Contract", function() {
         const { hardhatToken, owner } = await loadFixture(deployTokenFixture);
         const ownerBalance = await hardhatToken.balanceOf(owner.address);
 		let name = await hardhatToken.name();
+		console.log(name);
 		expect(await hardhatToken.name()).to.equal(name);
         expect(await hardhatToken.totalSupply()).to.equal(ownerBalance);
     });
 
+	//checks if the total supply of Staking Tokens is assigned to the owner
     it("Should assign the total supply of Reward tokens to the owner", async function () {
         const {rewardToken, RewardOwner } = await loadFixture(deployRewardTokenFixture);
         const ownerBalance = await rewardToken.balanceOf(RewardOwner.address);
@@ -59,6 +66,7 @@ describe("Staking Contract", function() {
 		await loadFixture(deployStakingFixture);
 	})
 
+	//checks if the total supply of Reward Tokens is assigned to the owner
 	it("Should assign the total supply of airdrop tokens to the owner", async function () {
 		const [owner] = await ethers.getSigners();
 		const {airdrop} = await loadFixture(deployAirdropFixture);
@@ -155,13 +163,36 @@ describe("Staking Contract", function() {
 
 	it("user should able to withdraw deposit token", async function () {
 		const [owner] = await ethers.getSigners();
-		await hardhatToken.approve(staking.address, 100000);
-		const bal = await hardhatToken.balanceOf(staking.address);
-		console.log("balance", bal);
-		// const val = await staking.balanceOf(owner.address, hardhatToken.address);
-		// console.log(val);
-		// await staking.withdraw(hardhatToken.address, 100);
-		// const vala = await staking.balanceOf(owner.address, hardhatToken.address);
-		// console.log(vala);
+		await expect(staking.withdraw(hardhatToken.address, 60))
+        .to.emit(staking, "Withdrawn")
+        .withArgs(owner.address, hardhatToken.address, 60);
+		expect(await hardhatToken.balanceOf(staking.address)).to.equal(40);
 	});
+
+	it("user should able to get reward after withdraw", async function () {
+		const [owner] = await ethers.getSigners();
+		await rewardToken.approve(staking.address, 50000);
+		await expect(staking.getReward())
+        .to.emit(staking, "RewardPaid")
+        .withArgs(owner.address);
+		expect(await rewardToken.balanceOf(staking.address)).to.equal(0);
+	});
+
+	it("should revert if it call before completion of staking period", async function () {
+		await expect(staking.blockNumberAtEndTimestamp()).to.be.revertedWith("either staking duration not completed or function already call");
+	});
+
+	function sayHi() {
+		console.log('Hello');
+	  }
+	it("should set the last block number at time of endTimestamp", async function () {
+		const endTime = await staking.endTimestamp();
+		console.log(endTime);
+		await helpers.time.increase(3600);
+		const endtime = await staking.endTimestamp();
+		console.log("After setTimeout!!", endtime);
+	});
+
+
+
 });
