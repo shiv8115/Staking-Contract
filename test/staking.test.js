@@ -1,6 +1,8 @@
 const { ethers, hardhat } = require("hardhat");
 const { expect } = require("chai");
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
+const { time } = require("@nomicfoundation/hardhat-network-helpers");
+const helpers = require("@nomicfoundation/hardhat-network-helpers");
 
 let rewardToken,hardhatToken, staking, airdrop; 
 
@@ -50,7 +52,6 @@ describe("Staking Contract", function() {
         const { hardhatToken, owner } = await loadFixture(deployTokenFixture);
         const ownerBalance = await hardhatToken.balanceOf(owner.address);
 		let name = await hardhatToken.name();
-		console.log(name);
 		expect(await hardhatToken.name()).to.equal(name);
         expect(await hardhatToken.totalSupply()).to.equal(ownerBalance);
     });
@@ -182,5 +183,11 @@ describe("Staking Contract", function() {
 		await expect(staking.blockNumberAtEndTimestamp()).to.be.revertedWith("either staking duration not completed or function already call");
 	});
 	it("should set the last block number at time of endTimestamp", async function () {
+		let endTime = await staking.endTimestamp;
+		//advance time by one hour and mine a new block
+		await helpers.time.increase(172800);
+		await staking.blockNumberAtEndTimestamp();
+		let val = await staking.blockAtEndTimestamp();
+		expect(await staking.blockAtEndTimestamp()).to.equal(val);
 	});
 });
