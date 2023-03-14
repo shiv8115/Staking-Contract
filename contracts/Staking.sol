@@ -5,7 +5,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
-
+import "hardhat/console.sol";
 /**
 @title Staking Contract
 @author Shivam Singh
@@ -152,7 +152,7 @@ contract StakingContract is AccessControlUpgradeable, Ownable2StepUpgradeable {
         _updateRewards(msg.sender, token);
 
         //transfer token from staking pool to user
-        IERC20Upgradeable(token).transferFrom(address(this), msg.sender, amount);
+        IERC20Upgradeable(token).transfer(msg.sender, amount);
 
         //update balance of staking amount of corresponding user
         _balances[msg.sender][token] -= amount;

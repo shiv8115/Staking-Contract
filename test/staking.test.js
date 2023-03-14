@@ -5,7 +5,6 @@ const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 let rewardToken,hardhatToken, staking, airdrop; 
 
 describe("Staking Contract", function() {
-    let rewardContract;
     async function deployTokenFixture() {
         const Token = await ethers.getContractFactory("StakingToken");
         const [owner] = await ethers.getSigners();
@@ -31,7 +30,7 @@ describe("Staking Contract", function() {
 			initializer: "initialize",
 		  });
 		await staking.deployed();
-		console.log("staking contract", staking.address);
+		//console.log("staking contract", staking.address);
 		return {Staking, staking};
 	}
 
@@ -42,30 +41,22 @@ describe("Staking Contract", function() {
 		return {Airdrop, airdrop};
 	}
 
-    it("Should assign the total supply of Stakingtokens to the owner", async function () {
+    it("Should assign the total supply of Staking Tokens to the owner", async function () {
         const { hardhatToken, owner } = await loadFixture(deployTokenFixture);
         const ownerBalance = await hardhatToken.balanceOf(owner.address);
-        console.log("staking Token", hardhatToken.address);
 		let name = await hardhatToken.name();
-		let supply = await hardhatToken.totalSupply();
-		console.log("staking Token name", name);
-		console.log("staking Token total supply", supply);
+		expect(await hardhatToken.name()).to.equal(name);
         expect(await hardhatToken.totalSupply()).to.equal(ownerBalance);
     });
 
     it("Should assign the total supply of Reward tokens to the owner", async function () {
         const {rewardToken, RewardOwner } = await loadFixture(deployRewardTokenFixture);
         const ownerBalance = await rewardToken.balanceOf(RewardOwner.address);
-        console.log("Reward token" ,rewardToken.address);
-		let name = await rewardToken.name();
-		let supply = await rewardToken.totalSupply();
-		console.log("Reward Token name", name);
-		console.log("Reward Token total supply", supply);
         expect(await rewardToken.totalSupply()).to.equal(ownerBalance);
         });
 
-	it("deploy staking contract", async function () {
-		const {staking} = await loadFixture(deployStakingFixture);
+	it("deploying staking contract", async function () {
+		await loadFixture(deployStakingFixture);
 	})
 
 	it("Should assign the total supply of airdrop tokens to the owner", async function () {
@@ -89,8 +80,7 @@ describe("Staking Contract", function() {
 	});
 
 	it("only owner should add token in white list", async function () {
-		const [owner, addr1, addr2] = await ethers.getSigners();
-		const expected = true;
+		const [owner, addr1] = await ethers.getSigners();
 		await expect(staking.connect(addr1).addWhitelistToken(hardhatToken.address)).to.be.revertedWith("AccessControl: account 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 is missing role 0x0000000000000000000000000000000000000000000000000000000000000000");
 	});
 
@@ -118,18 +108,19 @@ describe("Staking Contract", function() {
 	});
 
 	it("should revert if staking amount less than zero", async function() {
-		const [owner, addr1] = await ethers.getSigners();
 		await hardhatToken.approve(staking.address, 100000);
 		await expect(staking.stake(hardhatToken.address, 0)).to.be.revertedWith("Amount must be greater than zero");
+	});
 
+	it("should revert if transfer failed", async function() {
+		await hardhatToken.approve(staking.address,100000);
+		await expect(staking.stake(hardhatToken.address, 1000000)).to.be.revertedWith("ERC20: insufficient allowance");
 	});
 
 	it("user should able to stake only whitelisted token", async function () {
-		const [owner, addr1] = await ethers.getSigners();
 		await hardhatToken.approve(staking.address, 100000);
 		await staking.stake(hardhatToken.address, 50);
 		expect(await hardhatToken.balanceOf(staking.address)).to.equal(50);
-		const balance = await hardhatToken.balanceOf(staking.address);
 	});
 
 	it("should emit event of staking", async function() {
@@ -139,5 +130,38 @@ describe("Staking Contract", function() {
         .withArgs(owner.address, hardhatToken.address, 50);
 	});
 
+	it("user should successfully added as a whitelisted user", async function () {
+		const [owner] = await ethers.getSigners();
+		expect(await staking.isWhitelistedUser(owner.address)).to.equal(true);
+	})
 
+	it("should assign the user balance in staking record", async function () {
+		const [owner] = await ethers.getSigners();
+		const expected = 100;
+		expect(await staking.balanceOf(owner.address, hardhatToken.address)).to.equal(expected);
+	});
+
+	it("should revert user withdraw non whitelisted token", async function() {
+		await expect(staking.withdraw(airdrop.address, 5)).to.be.revertedWith("Token is not whitelisted");
+	});
+
+	it("should revert user withdraw amount less than zero", async function() {
+		await expect(staking.withdraw(hardhatToken.address, 0)).to.be.revertedWith("amount must be greater than zero");
+	});
+
+	it("should revert user withdraw greater amount of token", async function() {
+		await expect(staking.withdraw(hardhatToken.address, 200)).to.be.revertedWith("Insufficient balance");
+	});
+
+	it("user should able to withdraw deposit token", async function () {
+		const [owner] = await ethers.getSigners();
+		await hardhatToken.approve(staking.address, 100000);
+		const bal = await hardhatToken.balanceOf(staking.address);
+		console.log("balance", bal);
+		// const val = await staking.balanceOf(owner.address, hardhatToken.address);
+		// console.log(val);
+		// await staking.withdraw(hardhatToken.address, 100);
+		// const vala = await staking.balanceOf(owner.address, hardhatToken.address);
+		// console.log(vala);
+	});
 });
