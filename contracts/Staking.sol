@@ -57,8 +57,7 @@ contract StakingContract is AccessControlUpgradeable, Ownable2StepUpgradeable {
 
     /// @notice This event is emitted when user's reward paid to corresponding user.
     /// @param user  The user address.
-    /// @param amount The reward amount.
-    event RewardPaid(address indexed user, uint256 amount);
+    event RewardPaid(address indexed user);
 
     /// @notice This event is emitted when user reward updated.
     /// @param user  The user address.
@@ -123,14 +122,7 @@ contract StakingContract is AccessControlUpgradeable, Ownable2StepUpgradeable {
         onlyWhitelistedToken(token)
     {   
         require(amount > 0, "Amount must be greater than zero");
-        bool success = IERC20Upgradeable(token).transferFrom(
-            msg.sender,
-            address(this),
-            amount
-        );
-        if (!success) {
-            revert("staking transfer failed");
-        }
+        IERC20Upgradeable(token).transferFrom(msg.sender, address(this), amount);
         _whitelistedUsers.add(msg.sender);
         _balances[msg.sender][token] += amount;
         //if block number already stored then it does not override
@@ -157,36 +149,38 @@ contract StakingContract is AccessControlUpgradeable, Ownable2StepUpgradeable {
         //update balance of staking amount of corresponding user
         _balances[msg.sender][token] -= amount;
 
-        //balance tranfer to user
-        getReward(msg.sender);
         //emit event after successful withdraw of tokens
         emit Withdrawn(msg.sender, token, amount);
     }
 
     /// @dev this function used to get reward
-    /// @param user address of user
-    function getReward(address user) internal {
-        uint256 reward = _rewards[user];
+    function getReward() external {
+        uint256 reward = _rewards[msg.sender];
         if (reward > 0) {
-            _rewards[user] = 0;
-            emit RewardPaid(user, reward);
-            // Transfer reward tokens to user
+            _rewards[msg.sender] = 0;
+
+            IERC20Upgradeable(rewardTokenContract).transferFrom(
+            msg.sender,
+            address(this),
+            reward
+        );
+           // Transfer reward tokens to user
             require(
                 IERC20Upgradeable(rewardTokenContract).transfer(
-                    user,
+                    msg.sender,
                     reward
                 ),
                 "Failed to transfer reward tokens"
             );
+            emit RewardPaid(msg.sender);
         }
     }
 
     /// @dev this function used to update block number at the end of timestamp
     function blockNumberAtEndTimestamp() external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if(!flag && block.timestamp > endTimestamp) {
-            blockAtEndTimestamp = block.number;
-            flag = true;
-        }
+        require(!flag && block.timestamp > endTimestamp, "either staking duration not completed or function already call");
+        blockAtEndTimestamp = block.number;
+        flag = true;
     }
 
     /// @dev This function retrieves the current balance of token that user stake.
@@ -203,6 +197,9 @@ contract StakingContract is AccessControlUpgradeable, Ownable2StepUpgradeable {
         return _whitelistedToken.contains(token);
     }
 
+    /// @dev This function check given address is whitelisted or not
+    /// @param user address of user that to be checked
+    /// @return bool value either true or false, if whitelisted return true, otherwise false
     function isWhitelistedUser(address user) external view returns (bool) {
         return _whitelistedUsers.contains(user);
     }
@@ -220,7 +217,7 @@ contract StakingContract is AccessControlUpgradeable, Ownable2StepUpgradeable {
         _rewards[user] += reward;
         if(block.timestamp >= startTimestamp && block.timestamp <= endTimestamp) {
             _lastUpdateBlock[user][token] = block.number;
-        }
+        }  
         emit UpdateReward(user);
     }
 }
