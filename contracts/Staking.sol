@@ -181,10 +181,6 @@ contract StakingContract is AccessControlUpgradeable, Ownable2StepUpgradeable {
         require(!flag && block.timestamp > endTimestamp, "either staking duration not completed or function already call");
         blockAtEndTimestamp = block.number;
         flag = true;
-        // if(!flag && block.timestamp > endTimestamp) {
-        //     blockAtEndTimestamp = block.number;
-        //     flag = true;
-        // }
     }
 
     /// @dev This function retrieves the current balance of token that user stake.
