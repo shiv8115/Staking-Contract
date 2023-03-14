@@ -190,4 +190,31 @@ describe("Staking Contract", function() {
 		let val = await staking.blockAtEndTimestamp();
 		expect(await staking.blockAtEndTimestamp()).to.equal(val);
 	});
+
+	it("Reward update after staking period over", async function() {
+		//await staking.withdraw(hardhatToken.address, 10);
+		const [owner] = await ethers.getSigners();
+		await expect(staking.withdraw(hardhatToken.address, 10))
+        .to.emit(staking, "Withdrawn")
+        .withArgs(owner.address, hardhatToken.address, 10);
+		expect(await hardhatToken.balanceOf(staking.address)).to.equal(30);
+	});
+
+	it("user to claim their airdrop reward", async function () {
+		const [owner] = await ethers.getSigners();
+		await airdrop.claimReward(owner.address);
+		expect(await airdrop.claimed(owner.address)).to.equal(true);
+	});
+
+	it("should revert if user claimed already", async function () {
+		const [owner] = await ethers.getSigners();
+		await expect(airdrop.claimReward(owner.address)).to.be.revertedWith(" Reward already claimed");
+	});
+
+	it("whitelisted user should claimed airdrop reward", async function () {
+		const [owner] = await ethers.getSigners();
+		await airdrop.approve(airdrop.address,100000);
+		await airdrop.getReward(owner.address);
+		expect(await airdrop.balanceOf(owner.address)).to.equal(1000000);
+	});
 });

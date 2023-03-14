@@ -49,9 +49,10 @@ contract Airdrop is ERC20, Ownable {
     */      
     function getReward(address user) external {
         require(claimed[user], "no reward to withdraw");
-            // Transfer Airdrop_reward tokens to user
+           // Transfer Airdrop_reward tokens to user
             require(
-                IERC20Upgradeable(address(this)).transfer(
+                IERC20Upgradeable(address(this)).transferFrom(
+                    msg.sender,
                     user,
                     airdropReward
                 ),
