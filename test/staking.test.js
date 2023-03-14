@@ -1,6 +1,6 @@
-const { ethers } = require("hardhat");
+const { ethers, hardhat } = require("hardhat");
 const { expect } = require("chai");
-const { loadFixture, time } = require("@nomicfoundation/hardhat-network-helpers");
+const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
 
 let rewardToken,hardhatToken, staking, airdrop; 
 
@@ -181,18 +181,6 @@ describe("Staking Contract", function() {
 	it("should revert if it call before completion of staking period", async function () {
 		await expect(staking.blockNumberAtEndTimestamp()).to.be.revertedWith("either staking duration not completed or function already call");
 	});
-
-	function sayHi() {
-		console.log('Hello');
-	  }
 	it("should set the last block number at time of endTimestamp", async function () {
-		const endTime = await staking.endTimestamp();
-		console.log(endTime);
-		await helpers.time.increase(3600);
-		const endtime = await staking.endTimestamp();
-		console.log("After setTimeout!!", endtime);
 	});
-
-
-
 });
