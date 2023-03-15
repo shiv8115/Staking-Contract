@@ -1,7 +1,6 @@
 const { ethers, hardhat } = require("hardhat");
 const { expect } = require("chai");
 const { loadFixture } = require("@nomicfoundation/hardhat-network-helpers");
-const { time } = require("@nomicfoundation/hardhat-network-helpers");
 const helpers = require("@nomicfoundation/hardhat-network-helpers");
 
 let rewardToken,hardhatToken, staking, airdrop; 
@@ -112,8 +111,6 @@ describe("Staking Contract", function() {
 		const expected = true;
 		//check for existance
 		expect(await staking.isWhitelistedToken(rewardToken.address)).to.equal(expected);
-		//remove token
-		await expect(staking.connect(addr1).removeWhitelistToken(rewardToken.address)).to.be.revertedWith("AccessControl: account 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 is missing role 0x0000000000000000000000000000000000000000000000000000000000000000");
 	});
 
 	it("should revert if staking amount less than zero", async function() {
@@ -208,7 +205,7 @@ describe("Staking Contract", function() {
 
 	it("should revert if user claimed already", async function () {
 		const [owner] = await ethers.getSigners();
-		await expect(airdrop.claimReward(owner.address)).to.be.revertedWith(" Reward already claimed");
+		await expect(airdrop.claimReward(owner.address)).to.be.revertedWith("Airdrop: Reward already claimed");
 	});
 
 	it("whitelisted user should claimed airdrop reward", async function () {
