@@ -3,7 +3,8 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./Staking.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "./Istaking.sol";
 
 /**
 @title Airdrop
@@ -19,6 +20,10 @@ contract Airdrop is ERC20, Ownable {
 
     //A mapping to keep track of which users have already claimed their 
     mapping(address => bool) public claimed;
+
+
+    event AirdropPaid(address indexed user);
+    event UserClaimed(address indexed user);
 
     /**
     @dev Constructor function for the Airdrop contract
@@ -37,10 +42,11 @@ contract Airdrop is ERC20, Ownable {
     @param _user The address of the user claiming the reward
     */
     function claimReward(address _user) public {
-        require(block.timestamp > StakingContract(stakingContractAddress).endTimestamp(), "Staking period not ended yet");
-        require(!claimed[msg.sender], " Reward already claimed");
-        require(StakingContract(stakingContractAddress).isWhitelistedUser(_user), "Invalid proof"); 
+        require(block.timestamp > Istaking(stakingContractAddress).getEndTimestamp(), "Staking period not ended yet");
+        require(!claimed[msg.sender], "Airdrop: Reward already claimed");
+        require(Istaking(stakingContractAddress).isWhitelistedUser(_user), "Airdrop: Invalid proof"); 
         claimed[msg.sender] = true;
+        emit UserClaimed(_user);
     } 
 
     /**
@@ -48,7 +54,9 @@ contract Airdrop is ERC20, Ownable {
     @param user The address of the user withdrawing the reward
     */      
     function getReward(address user) external {
-        require(claimed[user], "no reward to withdraw");
+
+        require(claimed[user], "Airdrop: no reward to withdraw");
+
            // Transfer Airdrop_reward tokens to user
             require(
                 IERC20Upgradeable(address(this)).transferFrom(
@@ -58,6 +66,7 @@ contract Airdrop is ERC20, Ownable {
                 ),
                 "Failed to transfer reward tokens"
             );
+            emit AirdropPaid(user);
         }
 }
     

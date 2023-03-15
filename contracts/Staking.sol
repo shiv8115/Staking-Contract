@@ -204,6 +204,12 @@ contract StakingContract is AccessControlUpgradeable, Ownable2StepUpgradeable {
         return _whitelistedUsers.contains(user);
     }
 
+    /// @dev This function gives the endTimestamp of staking duration
+    /// @return uint256 value
+    function getEndTimestamp() external view returns (uint256) {
+        return endTimestamp;
+    }
+
     /// @dev this function used to update reward of user 
     /// @param user address of user
     /// @param token address of token
