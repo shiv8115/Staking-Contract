@@ -13,7 +13,7 @@ import "./Istaking.sol";
 contract Airdrop is ERC20, Ownable {
 
     // address of the staking contract
-    address public stakingContractAddress; 
+    Istaking public stakingContractAddress; 
 
     //The amount of airdrop reward to be distributed to each user
     uint256 public airdropReward;
@@ -31,7 +31,7 @@ contract Airdrop is ERC20, Ownable {
     @param _totalSupply The total supply of the Airdrop token
     @param _airdropReward The amount of airdrop reward to be distributed to each user
     */
-    constructor(address _stakingContractAddress, uint256 _totalSupply, uint256 _airdropReward) ERC20("AirdropRewardToken", "MTK"){
+    constructor(Istaking _stakingContractAddress, uint256 _totalSupply, uint256 _airdropReward) ERC20("AirdropRewardToken", "MTK"){
         stakingContractAddress = _stakingContractAddress;
         airdropReward = _airdropReward;
         _mint(msg.sender, _totalSupply);
@@ -42,9 +42,9 @@ contract Airdrop is ERC20, Ownable {
     @param _user The address of the user claiming the reward
     */
     function claimReward(address _user) public {
-        require(block.timestamp > Istaking(stakingContractAddress).getEndTimestamp(), "Staking period not ended yet");
+        require(block.timestamp > stakingContractAddress.getEndTimestamp(), "Staking period not ended yet");
         require(!claimed[msg.sender], "Airdrop: Reward already claimed");
-        require(Istaking(stakingContractAddress).isWhitelistedUser(_user), "Airdrop: Invalid proof"); 
+        require(stakingContractAddress.isWhitelistedUser(_user), "Airdrop: Invalid proof"); 
         claimed[msg.sender] = true;
         emit UserClaimed(_user);
     } 
